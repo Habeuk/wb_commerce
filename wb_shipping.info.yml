@@ -1,0 +1,7 @@
+name: 'wb_shipping'
+type: module
+description: 'Modules to handle shipping by domain'
+core: 9.x
+package: 'Custom'
+dependencies:
+  - hbkcolissimochrono

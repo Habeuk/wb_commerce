@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @file
+ * Contains wb_shipping.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function wb_shipping_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the wb_shipping module.
+    case 'help.page.wb_shipping':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Modules to handle shipping by domain') . '</p>';
+      return $output;
+
+    default:
+  }
+}
