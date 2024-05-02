@@ -1,0 +1,9 @@
+# permet gerer les moyens de payement.
+wb_shipping.shipping_configs:
+  path: "/admin/wb-shipping/shipping-types"
+  defaults:
+    _title: "Configuration de methode de paiement"
+    _controller: '\Drupal\wb_shipping\Controller\WbShippingConfigController::ShippingTypes'
+  requirements:
+    _permission: "access content"
+    _role: "gerant_de_site_web+administrator"

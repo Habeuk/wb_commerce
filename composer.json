@@ -1,15 +1,16 @@
 {
-    "name": "habeuk/wb_shipping",
-    "description": "Module to handle shipping cost by domain",
-    "type": "drupal-custom-module",
-    "require": {
-        "stephane888/creation_site_virtuel": "^1.7 | dev-1x"
-    },
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "vystii",
-            "email": "ngahabanda@gmail.com"
-        }
-    ]
+  "name": "habeuk/wb_commerce",
+  "description": "Module to handle shipping cost by domain",
+  "type": "drupal-custom-module",
+  "require": {
+    "stephane888/creation_site_virtuel": "^1.7 | dev-1x",
+    "habeuk/lesroidelareno": "^2.0 | dev-wbh"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "vystii",
+      "email": "ngahabanda@gmail.com"
+    }
+  ]
 }
