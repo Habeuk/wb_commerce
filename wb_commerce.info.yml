@@ -4,4 +4,6 @@ description: "Modules to handle shipping by domain"
 core_version_requirement: 9.x
 package: "Custom"
 dependencies:
-  - hbkcolissimochrono
+  - creation_site_virtuel
+  - lesroidelareno
+  - manage_module_config

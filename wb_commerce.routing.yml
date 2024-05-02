@@ -1,9 +1,28 @@
-# permet gerer les moyens de payement.
-wb_shipping.shipping_configs:
-  path: "/admin/wb-shipping/shipping-types"
+# permet gerer les shipping methods
+wb_commerce.shipping_method_list:
+  path: "/admin/wb_commerce/shipping-methods"
   defaults:
     _title: "Configuration de methode de paiement"
-    _controller: '\Drupal\wb_shipping\Controller\WbShippingConfigController::ShippingTypes'
+    _controller: '\Drupal\wb_commerce\Controller\WbCommerceController::shippingMethodsList'
   requirements:
-    _permission: "access content"
-    _role: "gerant_de_site_web+administrator"
+    _permission: "access administration pages"
+
+wb_commerce.shipping_method_add:
+  path: "/admin/wb_commerce/shipping-methods/add"
+  defaults:
+    _title: "Configuration de methode de paiement"
+    _controller: '\Drupal\wb_commerce\Controller\WbCommerceController::addShippingMethod'
+  requirements:
+    _permission: "access administration pages"
+
+wb_commerce.shipping_method:
+  path: "/admin/wb_commerce/shipping-methods/{shipping_method}"
+  options:
+    parameters:
+      shipping_method:
+        type: entity:commerce_shipping_method
+  defaults:
+    _title: "Configuration de methode de paiement"
+    _controller: '\Drupal\wb_commerce\Controller\WbCommerceController::shippingMethod'
+  requirements:
+    _permission: "access administration pages"
