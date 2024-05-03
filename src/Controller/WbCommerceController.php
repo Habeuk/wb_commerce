@@ -16,6 +16,7 @@ use Drupal\lesroidelareno\Entity\CommercePaymentConfig;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\domain\DomainNegotiatorInterface;
 use Drupal\lesroidelareno\lesroidelareno;
+use Drupal\commerce_shipping\ShippingMethodManager;
 
 /**
  * Class DonneeSiteInternetEntityController.
@@ -29,7 +30,10 @@ class WbCommerceController extends ControllerBase {
    */
   protected $domainNegotiator;
 
-
+  /**
+   * @var \Drupal\commerce_shipping\ShippingMethodManager $ShippingMethodsManager
+   */
+  protected $ShippingMethodsManager;
   /**
    *
    * @var EntityTypeManagerInterface
@@ -41,6 +45,7 @@ class WbCommerceController extends ControllerBase {
     return new static(
       $container->get('domain.negotiator'),
       $container->get('entity_type.manager'),
+      $container->get('plugin.manager.commerce_shipping_method'),
     );
   }
 
@@ -48,11 +53,12 @@ class WbCommerceController extends ControllerBase {
    *
    * @param DomainNegotiatorInterface $domainNegotiator
    * @param EntityTypeManagerInterface $entity_type_manager
-   * @param Entity
+   * @param \Drupal\commerce_shipping\ShippingMethodManager $pluginManager
    */
-  public function __construct(DomainNegotiatorInterface $domainNegotiator, EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(DomainNegotiatorInterface $domainNegotiator, EntityTypeManagerInterface $entity_type_manager, ShippingMethodManager $shipping_method_manager) {
     $this->entityTypeManager = $entity_type_manager;
     $this->domainNegotiator = $domainNegotiator;
+    $this->ShippingMethodsManager = $shipping_method_manager;
   }
 
 
@@ -88,6 +94,28 @@ class WbCommerceController extends ControllerBase {
     ]);
     $form = $this->entityFormBuilder()->getForm($shipping_method, "add");
     $this->preHandleForm($form);
+    // dd($form);
+    $type = \Drupal::service('plugin.manager.commerce_shipping_method');
+    // dd($this->ShippingMethodsManager->getDefinitions());
+    // Obtenir la définition du plugin en utilisant l'ID du plugin.
+    // $plugin_definition = $type->getDefinition('votre_plugin_id');
+    $form = [
+      "plugin" => [
+        '#required' => false,
+        '#type' => 'select2',
+        '#weight' => 3,
+        '#options' => array_map(function ($plugin) {
+          return $plugin["label"];
+        }, $this->ShippingMethodsManager->getDefinitions())
+      ]
+    ];
+    $form['actions']['next'] = [
+      '#weight' => 5,
+      '#type' => 'submit',
+      '#value' => 0 ? $this->t('Soumettre') : $this->t('Suivant'),
+      '#submit' => ['::nextSubmit'],
+    ];
+
     // dd($form);
     return $form;
   }
