@@ -17,6 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\domain\DomainNegotiatorInterface;
 use Drupal\lesroidelareno\lesroidelareno;
 use Drupal\commerce_shipping\ShippingMethodManager;
+use PhpParser\Node\Expr\Isset_;
 
 /**
  * Class DonneeSiteInternetEntityController.
@@ -72,57 +73,73 @@ class WbCommerceController extends ControllerBase {
     ];
 
     $fieldsToDisable = [
-      "field_domain_access",
-      "field_domain_source",
+      // "field_domain_access",
+      // "field_domain_source",
     ];
 
 
     foreach ($pluginsToDisable as $pluginId) {
       unset($form["plugin"]["widget"][0]["target_plugin_id"][$pluginId]);
+      unset($form["plugin"]["widget"][0]["target_plugin_id"]["#options"][$pluginId]);
     }
 
     foreach ($fieldsToDisable as $field) {
-      //logique pour cacher les champs
+      $form[$field]["#access"] = false;
     }
     return $form;
   }
 
   public function addShippingMethod(Request $request) {
+
     $shipping_method = $this->entityTypeManager()->getStorage("commerce_shipping_method")->create([
       "field_domain_access" => $this->domainNegotiator->getActiveId(),
       "field_domain_source" => $this->domainNegotiator->getActiveId()
     ]);
+
     $form = $this->entityFormBuilder()->getForm($shipping_method, "add");
     $this->preHandleForm($form);
-    // dd($form);
-    $type = \Drupal::service('plugin.manager.commerce_shipping_method');
-    // dd($this->ShippingMethodsManager->getDefinitions());
-    // Obtenir la définition du plugin en utilisant l'ID du plugin.
-    // $plugin_definition = $type->getDefinition('votre_plugin_id');
-    $form = [
-      "plugin" => [
-        '#required' => false,
-        '#type' => 'select2',
-        '#weight' => 3,
-        '#options' => array_map(function ($plugin) {
-          return $plugin["label"];
-        }, $this->ShippingMethodsManager->getDefinitions())
-      ]
-    ];
-    $form['actions']['next'] = [
-      '#weight' => 5,
-      '#type' => 'submit',
-      '#value' => 0 ? $this->t('Soumettre') : $this->t('Suivant'),
-      '#submit' => ['::nextSubmit'],
-    ];
+    if ($request->isMethod("POST")) {
+      $form["plugin"]["widget"][0]["target_plugin_id"]["#access"] = false;
+      return  $form;
+    } else {
+      $plugins = array_keys($this->ShippingMethodsManager->getDefinitions());
+      $form = [
+        "#type" => "form",
+        "target_plugin_id" => $form["plugin"]["widget"][0]["target_plugin_id"],
+        "#method" => "post",
+        "#action" => Url::fromRoute(
+          'wb_commerce.shipping_method_add',
+          [],
+          [
+            'query' => [
+              'destination' => $request->get("destination") ?? $request->getPathInfo()
+            ]
+          ]
+        )->toString()
+      ];
+      $form['submit'] = [
+        '#name' => "op",
+        '#type' => 'submit',
+        '#value' => $this->t('Suivant'),
+        '#button_type' => 'primary'
+      ];
 
-    // dd($form);
+      //delete call back
+      unset($form["#ajax"]);
+      foreach ($plugins as $plugin) {
+        if (isset($form[$plugin]["#ajax"])) {
+          unset($form[$plugin]["#ajax"]);
+          $form[$plugin]["#ajax_processed"] = false;
+        }
+      }
+    }
     return $form;
   }
 
   public function shippingMethod(Request $request, ShippingMethod $shipping_method) {
     $form = $this->entityFormBuilder()->getForm($shipping_method, "edit");
     $this->preHandleForm($form);
+    $form["plugin"]["widget"][0]["target_plugin_id"]["#access"] = false;
     return $form;
   }
 
@@ -149,7 +166,7 @@ class WbCommerceController extends ControllerBase {
     // Build the render array for the button.
     $datas['action_button'] = [
       '#type' => 'link',
-      '#title' => t("Add a method"),
+      '#title' => $this->t("Add a method"),
       '#url' => Url::fromRoute('wb_commerce.shipping_method_add', [], [
         'query' => [
           'destination' => $request->getPathInfo()
@@ -160,13 +177,12 @@ class WbCommerceController extends ControllerBase {
       ]
     ];
     $header = [
-      'name' => t('Name'),
-      'statut' => t('Active'),
-      'operations' => t('Operations')
+      'name' => $this->t('Name'),
+      'statut' => $this->t('Active'),
+      'operations' => $this->t('Operations')
     ];
     $rows = [];
     foreach ($shippingMethods as &$shippingMethod) {
-      // dd($shippingMethod->id());
       $id = $shippingMethod->id();
       $rows[$id] = [
         'name' => $shippingMethod->hasLinkTemplate('canonical') ? [
@@ -177,7 +193,7 @@ class WbCommerceController extends ControllerBase {
             '#url' => $shippingMethod->toUrl('canonical')
           ]
         ] : $shippingMethod->label(),
-        'statut' => $shippingMethod->isEnabled() ? t("Yes") : t("No"),
+        'statut' => $shippingMethod->isEnabled() ? $this->t("Yes") : $this->t("No"),
         'operations' => [
           'data' => [
             "#type" => "operations",

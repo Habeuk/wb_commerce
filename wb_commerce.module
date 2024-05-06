@@ -23,21 +23,3 @@ function wb_shipping_help($route_name, RouteMatchInterface $route_match) {
     default:
   }
 }
-
-
-
-/**
- * Implements hook_form_alter().
- */
-function wb_commerce_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-  // Check for a specific form ID.
-  // dd($form);
-  if ($form_id == 'my_entity_form_id') {
-    // Alter the options for the 'commerce_plugin_item:commerce_shipping_method' field.
-    $form['my_field_name']['#options'] = [
-      'option_1' => t('Option 1'),
-      'option_2' => t('Option 2'),
-      // Add more options as needed.
-    ];
-  }
-}
