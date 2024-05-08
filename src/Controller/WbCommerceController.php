@@ -18,6 +18,7 @@ use Drupal\domain\DomainNegotiatorInterface;
 use Drupal\lesroidelareno\lesroidelareno;
 use Drupal\commerce_shipping\ShippingMethodManager;
 use PhpParser\Node\Expr\Isset_;
+use Symfony\Component\Validator\Constraints\IsNull;
 
 /**
  * Class DonneeSiteInternetEntityController.
@@ -67,10 +68,16 @@ class WbCommerceController extends ControllerBase {
    * @return array
    */
   private function preHandleForm(array &$form) {
-    $pluginsToDisable = [
-      // "flat_rate_per_item",
-      // "free_shipping_wb_horizon"
-    ];
+    $config = $this->config('wb_commerce.shippingmethodfilter');
+    // dd($config->get());
+    $filter_active = $config->get('active');
+
+
+    $pluginsToDisable = is_null($filter_active) | !$filter_active ? [] : array_keys(
+      array_filter($config->get("available_plugins"), function ($plugin) {
+        return !(bool)$plugin;
+      })
+    );
 
     $fieldsToDisable = [
       // "field_domain_access",
