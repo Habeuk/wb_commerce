@@ -68,8 +68,8 @@ class WbCommerceController extends ControllerBase {
    */
   private function preHandleForm(array &$form) {
     $pluginsToDisable = [
-      "flat_rate_per_item",
-      "free_shipping_wb_horizon"
+      // "flat_rate_per_item",
+      // "free_shipping_wb_horizon"
     ];
 
     $fieldsToDisable = [

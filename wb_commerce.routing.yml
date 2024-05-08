@@ -2,7 +2,7 @@
 wb_commerce.shipping_method_list:
   path: "/admin/wb_commerce/shipping-methods"
   defaults:
-    _title: "Configuration de methode de paiement"
+    _title: "Configuration de methode de livraison"
     _controller: '\Drupal\wb_commerce\Controller\WbCommerceController::shippingMethodsList'
   requirements:
     _permission: "access administration pages"
@@ -10,7 +10,7 @@ wb_commerce.shipping_method_list:
 wb_commerce.shipping_method_add:
   path: "/admin/wb_commerce/shipping-methods/add"
   defaults:
-    _title: "Configuration de methode de paiement"
+    _title: "Ajout d'une methode de livraison"
     _controller: '\Drupal\wb_commerce\Controller\WbCommerceController::addShippingMethod'
   requirements:
     _permission: "access administration pages"
@@ -22,7 +22,7 @@ wb_commerce.shipping_method:
       shipping_method:
         type: entity:commerce_shipping_method
   defaults:
-    _title: "Configuration de methode de paiement"
+    _title: "Edition d'une methode de livraison"
     _controller: '\Drupal\wb_commerce\Controller\WbCommerceController::shippingMethod'
   requirements:
     _permission: "access administration pages"
