@@ -26,12 +26,25 @@ wb_commerce.shipping_method:
     _controller: '\Drupal\wb_commerce\Controller\WbCommerceController::shippingMethod'
   requirements:
     _permission: "access administration pages"
+
+wb_commerce.duplicate_shipping_method:
+  path: "/admin/wb_commerce/shipping-methods/{shipping_method}/duplicate"
+  options:
+    parameters:
+      shipping_method:
+        type: entity:commerce_shipping_method
+  defaults:
+    _title: "Edition d'une methode de livraison"
+    _controller: '\Drupal\wb_commerce\Controller\WbCommerceController::duplicateShippingMethod'
+  requirements:
+    _permission: "access administration pages"
+
 wb_commerce.wb_commerce_shipping_method_filter:
-  path: '/admin/config/wb_commerce/shippingmethodfilter'
+  path: "/admin/config/wb_commerce/shippingmethodfilter"
   defaults:
     _form: '\Drupal\wb_commerce\Form\ShippingMethodFilter'
-    _title: 'ShippingMethodFilter'
+    _title: "ShippingMethodFilter"
   requirements:
-    _permission: 'access administration pages'
+    _permission: "access administration pages"
   options:
     _admin_route: TRUE

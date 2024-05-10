@@ -2,6 +2,7 @@
 
 namespace Drupal\wb_commerce\Controller;
 
+use Drupal\commerce\Plugin\Field\FieldWidget\PluginRadiosWidget;
 use Drupal\Core\Controller\ControllerBase;
 use Stephane888\Debug\Repositories\ConfigDrupal;
 use Stephane888\DrupalUtility\HttpResponse;
@@ -73,17 +74,28 @@ class WbCommerceController extends ControllerBase {
     $filter_active = $config->get('active');
 
 
+    if (is_null($filter_active) | !$filter_active) {
+      $pluginsToDisable = [];
+    } else {
+      $plugins = $config->get("available_plugins");
+      $pluginsToDisable = array_keys(
+        array_filter($plugins, function ($plugin) {
+          return !(bool)$plugin;
+        })
+      );
+    }
+
     $pluginsToDisable = is_null($filter_active) | !$filter_active ? [] : array_keys(
       array_filter($config->get("available_plugins"), function ($plugin) {
         return !(bool)$plugin;
       })
     );
 
+
     $fieldsToDisable = [
       // "field_domain_access",
       // "field_domain_source",
     ];
-
 
     foreach ($pluginsToDisable as $pluginId) {
       unset($form["plugin"]["widget"][0]["target_plugin_id"][$pluginId]);
@@ -97,22 +109,24 @@ class WbCommerceController extends ControllerBase {
   }
 
   public function addShippingMethod(Request $request) {
-
+    /**
+     * @var ShippingMethod $shipping_method
+     */
     $shipping_method = $this->entityTypeManager()->getStorage("commerce_shipping_method")->create([
       "field_domain_access" => $this->domainNegotiator->getActiveId(),
       "field_domain_source" => $this->domainNegotiator->getActiveId()
     ]);
-
     $form = $this->entityFormBuilder()->getForm($shipping_method, "add");
-    $this->preHandleForm($form);
     if ($request->isMethod("POST")) {
-      $form["plugin"]["widget"][0]["target_plugin_id"]["#access"] = false;
-      return  $form;
+      $shipping_method->set("plugin", $request->get("plugin"));
+      return  $this->shippingMethod($request, $shipping_method);
     } else {
+      // dd($form["plugin"]['widget'][0]["target_plugin_id"]);
       $plugins = array_keys($this->ShippingMethodsManager->getDefinitions());
+      $default_value = $this->formatePluginField($form);
       $form = [
         "#type" => "form",
-        "target_plugin_id" => $form["plugin"]["widget"][0]["target_plugin_id"],
+        "plugin" => $form["plugin"]["widget"][0]["target_plugin_id"],
         "#method" => "post",
         "#action" => Url::fromRoute(
           'wb_commerce.shipping_method_add',
@@ -130,7 +144,9 @@ class WbCommerceController extends ControllerBase {
         '#value' => $this->t('Suivant'),
         '#button_type' => 'primary'
       ];
-
+      $form["plugin"]["#default_value"] = $default_value;
+      $form["plugin"]["#value"] = $default_value;
+      // dd($default_value);
       //delete call back
       unset($form["#ajax"]);
       foreach ($plugins as $plugin) {
@@ -143,12 +159,27 @@ class WbCommerceController extends ControllerBase {
     return $form;
   }
 
-  public function shippingMethod(Request $request, ShippingMethod $shipping_method) {
-    $form = $this->entityFormBuilder()->getForm($shipping_method, "edit");
-    $this->preHandleForm($form);
-    $form["plugin"]["widget"][0]["target_plugin_id"]["#access"] = false;
+  public function duplicateShippingMethod(Request $request, ShippingMethod $shipping_method) {
+    $new_shipping = $shipping_method->createDuplicate();
+    $new_shipping->set("name", "");
+    return $this->shippingMethod($request, $new_shipping);
+  }
+
+  public function   shippingMethod(Request $request, ShippingMethod $shipping_method) {
+    $is_new = $shipping_method->isNew();
+    $post_plugin = $request->get("plugin");
+
+    $form = $this->entityFormBuilder()->getForm($shipping_method, $is_new ? "add" :  "edit");
+    $pluginId =  $shipping_method->get("plugin")->getValue()[0]["target_plugin_id"] ??  $post_plugin[0]["target_plugin_id"] ??  null;
+    // dump($shipping_method->toArray());
+    $this->formatePluginField($form, $pluginId);
+
+
+    //hide the plugin field 
+    // $form["plugin"]["widget"][0]["target_plugin_id"]["#attributes"]["class"][] = "hidden";
     return $form;
   }
+
 
   /**
    * permet de lister les paiements et de les configurees par le prorietaire du
@@ -207,9 +238,24 @@ class WbCommerceController extends ControllerBase {
             "#links" => [
               'handle' => [
                 'title' => $this->t('Edit'),
-                'weight' => 10,
+                'weight' => 0,
                 'url' => Url::fromRoute(
                   "wb_commerce.shipping_method",
+                  [
+                    'shipping_method' => $shippingMethod->id()
+                  ],
+                  [
+                    'query' => [
+                      'destination' => $request->getPathInfo()
+                    ]
+                  ]
+                )
+              ],
+              'duplicate' => [
+                'title' => $this->t('Duplicate'),
+                'weight' => 9,
+                'url' => Url::fromRoute(
+                  "wb_commerce.duplicate_shipping_method",
                   [
                     'shipping_method' => $shippingMethod->id()
                   ],
@@ -264,6 +310,52 @@ class WbCommerceController extends ControllerBase {
   }
 
 
+  protected function formatePluginField(array &$form, $pluginId = null) {
+    $config = $this->config('wb_commerce.shippingmethodfilter');
+    $filter_active = $config->get('active');
+    $pluginsToDisable = [];
+    $pluginsToFormat = [];
+
+    if ((is_null($filter_active) | !$filter_active) && !isset($pluginId)) {
+      $pluginsToDisable = [];
+    } else {
+      $plugins = $config->get("available_plugins");
+      if (isset($pluginId)) {
+        unset($plugins[$pluginId]);
+        $pluginsToDisable = array_keys($plugins);
+        $pluginsToFormat = [$pluginId];
+      } else {
+        $pluginsToDisable = array_keys(
+          array_filter($plugins, function ($plugin) {
+
+            return !(bool)$plugin;
+          })
+        );
+        $pluginsToFormat = array_keys(
+          array_filter($plugins, function ($plugin) {
+
+            return (bool)$plugin;
+          })
+        );
+      }
+    }
+    // dd($pluginsToDisable, $pluginId);
+
+    foreach ($pluginsToDisable as $pluginId) {
+      unset($form["plugin"]["widget"][0]["target_plugin_id"][$pluginId]);
+      unset($form["plugin"]["widget"][0]["target_plugin_id"]["#options"][$pluginId]);
+    }
+    //formatter les plugins actifs
+    $form["plugin"]["widget"][0]["target_plugin_id"]["#ajax"]["callback"] = ["::pluginUpdate"];
+    $form["plugin"]["widget"][0]["target_plugin_id"]["#default_value"] = $pluginsToFormat[0] ?? "";
+    $form["plugin"]["widget"][0]["target_plugin_id"]["#value"] = $pluginsToFormat[0] ?? "";
+    foreach ($pluginsToFormat as $pluginId) {
+      $form["plugin"]["widget"][0]["target_plugin_id"][$pluginId]["#attributes"]["readonly"] = "readonly";
+      $form["plugin"]["widget"][0]["target_plugin_id"][$pluginId]["#default_value"] = $pluginsToFormat[0] ?? "";
+      $form["plugin"]["widget"][0]["target_plugin_id"][$pluginId]["#value"] = $pluginsToFormat[0] ?? "";
+    }
+    return $pluginsToFormat[0];
+  }
 
   /**
    * Le but de cette fonction est de notifier l'administrateur l'acces à des
