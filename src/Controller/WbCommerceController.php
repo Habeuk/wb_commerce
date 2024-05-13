@@ -64,50 +64,6 @@ class WbCommerceController extends ControllerBase {
     $this->ShippingMethodsManager = $shipping_method_manager;
   }
 
-
-  /**
-   * @return array
-   */
-  private function preHandleForm(array &$form) {
-    $config = $this->config('wb_commerce.shippingmethodfilter');
-    // dd($config->get());
-    $filter_active = $config->get('active');
-
-
-    if (is_null($filter_active) | !$filter_active) {
-      $pluginsToDisable = [];
-    } else {
-      $plugins = $config->get("available_plugins");
-      $pluginsToDisable = array_keys(
-        array_filter($plugins, function ($plugin) {
-          return !(bool)$plugin;
-        })
-      );
-    }
-
-    $pluginsToDisable = is_null($filter_active) | !$filter_active ? [] : array_keys(
-      array_filter($config->get("available_plugins"), function ($plugin) {
-        return !(bool)$plugin;
-      })
-    );
-
-
-    $fieldsToDisable = [
-      // "field_domain_access",
-      // "field_domain_source",
-    ];
-
-    foreach ($pluginsToDisable as $pluginId) {
-      unset($form["plugin"]["widget"][0]["target_plugin_id"][$pluginId]);
-      unset($form["plugin"]["widget"][0]["target_plugin_id"]["#options"][$pluginId]);
-    }
-
-    foreach ($fieldsToDisable as $field) {
-      $form[$field]["#access"] = false;
-    }
-    return $form;
-  }
-
   public function addShippingMethod(Request $request) {
     /**
      * @var ShippingMethod $shipping_method

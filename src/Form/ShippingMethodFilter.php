@@ -57,15 +57,6 @@ class ShippingMethodFilter extends ConfigFormBase {
       '#default_value' => $config->get('active'),
     ];
 
-    $form['available_plugins'] = [
-      '#type' => 'checkboxes',
-      '#title' => $this->t('available plugins'),
-      '#options' => array_map(function ($element) {
-        return $element["label"];
-      }, $plugins),
-      '#default_value' => $config->get('available_plugins') ?? array_keys($plugins),
-    ];
-
     $form['plugins'] = [
       '#type' => 'details',
       '#title' => $this->t('Plugins'),
@@ -106,7 +97,6 @@ class ShippingMethodFilter extends ConfigFormBase {
     // dd($form_state);
     $this->config('wb_commerce.shippingmethodfilter')
       ->set('active', $form_state->getValue('active'))
-      ->set('available_plugins', $form_state->getValue('available_plugins'))
       ->set('plugins', $form_state->getValue('plugins'))
       ->save();
   }
