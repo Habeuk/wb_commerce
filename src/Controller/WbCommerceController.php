@@ -315,32 +315,34 @@ class WbCommerceController extends ControllerBase {
     $filter_active = $config->get('active');
     $pluginsToDisable = [];
     $pluginsToFormat = [];
-
     if ((is_null($filter_active) | !$filter_active) && !isset($pluginId)) {
+      //if the filter is not active and no plugin have been selected
+      //allow all plugins
       $pluginsToDisable = [];
     } else {
-      $plugins = $config->get("available_plugins");
       if (isset($pluginId)) {
+        $plugins =         $this->ShippingMethodsManager->getDefinitions();        // a plugin have been selected.
+        // disable every plugin except the selected one
+        $pluginsToFormat = [
+          $pluginId => $config->get("plugins")[$pluginId] ?? $plugins[$pluginId]
+        ];
         unset($plugins[$pluginId]);
         $pluginsToDisable = array_keys($plugins);
-        $pluginsToFormat = [$pluginId];
       } else {
+        //the filter is activated and a plugin haven't been selected yet
+        //allow only the activated plugins of the configuration
         $pluginsToDisable = array_keys(
-          array_filter($plugins, function ($plugin) {
-
-            return !(bool)$plugin;
+          array_filter($config->get("plugins"), function ($element) {
+            return !(bool) $element["active"];
           })
         );
-        $pluginsToFormat = array_keys(
-          array_filter($plugins, function ($plugin) {
+        $pluginsToFormat = array_filter($config->get("plugins"), function ($plugin) {
 
-            return (bool)$plugin;
-          })
-        );
+          return (bool)$plugin["active"];
+        });
       }
     }
-    // dd($pluginsToDisable, $pluginId);
-
+    $test = "pluginId";
     foreach ($pluginsToDisable as $pluginId) {
       unset($form["plugin"]["widget"][0]["target_plugin_id"][$pluginId]);
       unset($form["plugin"]["widget"][0]["target_plugin_id"]["#options"][$pluginId]);
@@ -349,12 +351,10 @@ class WbCommerceController extends ControllerBase {
     $form["plugin"]["widget"][0]["target_plugin_id"]["#ajax"]["callback"] = ["::pluginUpdate"];
     $form["plugin"]["widget"][0]["target_plugin_id"]["#default_value"] = $pluginsToFormat[0] ?? "";
     $form["plugin"]["widget"][0]["target_plugin_id"]["#value"] = $pluginsToFormat[0] ?? "";
-    foreach ($pluginsToFormat as $pluginId) {
-      $form["plugin"]["widget"][0]["target_plugin_id"][$pluginId]["#attributes"]["readonly"] = "readonly";
-      $form["plugin"]["widget"][0]["target_plugin_id"][$pluginId]["#default_value"] = $pluginsToFormat[0] ?? "";
-      $form["plugin"]["widget"][0]["target_plugin_id"][$pluginId]["#value"] = $pluginsToFormat[0] ?? "";
+    foreach ($pluginsToFormat as $pluginId => $plugin) {
+      $currentPlugin = &$form["plugin"]["widget"][0]["target_plugin_id"][$pluginId];
+      $currentPlugin["#title"] = $plugin["label"];
     }
-    return $pluginsToFormat[0];
   }
 
   /**
