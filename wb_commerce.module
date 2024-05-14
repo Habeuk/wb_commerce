@@ -5,13 +5,15 @@
  * Contains wb_shipping.module.
  */
 
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\Core\Form\FormStateInterface;
+use Drupal\lesroidelareno\lesroidelareno;
+use Drupal\Core\Url;
 
 /**
  * Implements hook_help().
  */
-function wb_shipping_help($route_name, RouteMatchInterface $route_match) {
+function wb_commerce_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
       // Main module help for the wb_shipping module.
     case 'help.page.wb_shipping':
@@ -21,5 +23,23 @@ function wb_shipping_help($route_name, RouteMatchInterface $route_match) {
       return $output;
 
     default:
+  }
+}
+
+function wb_commerce_form_hbkcolissimochrono_settings_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  // dd("hello");
+  $request = Drupal::request();
+  $query = $request->query->get('domain_config_ui_domain');
+  $domain =  lesroidelareno::getCurrentDomainId();
+  if (empty($query) || $domain !== $query) {
+    $url = Url::fromRoute("hbkcolissimochrono.settings", [], [
+      'query' => [
+        'domain_config_ui_domain' => $domain,
+        'domain_config_ui_language' => ''
+      ],
+      'absolute' => TRUE
+    ]);
+    $response =  new RedirectResponse($url->toString());
+    $response->send();
   }
 }
