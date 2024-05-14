@@ -118,6 +118,9 @@ class WbCommerceController extends ControllerBase {
   public function duplicateShippingMethod(Request $request, ShippingMethod $shipping_method) {
     $new_shipping = $shipping_method->createDuplicate();
     $new_shipping->set("name", "");
+    $new_shipping->set('is_public', false);
+    $new_shipping->set('field_domain_access', $this->domainNegotiator->getActiveId());
+    $new_shipping->set('field_domain_source', $this->domainNegotiator->getActiveId());
     return $this->shippingMethod($request, $new_shipping);
   }
 
@@ -136,40 +139,12 @@ class WbCommerceController extends ControllerBase {
     return $form;
   }
 
-
   /**
-   * permet de lister les paiements et de les configurees par le prorietaire du
-   * site.
+   * @var  array<ShippingMehod> $shippingMethods
+   * @return array
    */
-  public function shippingMethodsList(Request $request) {
-    if (!lesroidelareno::userIsAdministratorSite() && lesroidelareno::FindUserAuthorDomain()) {
-      return $this->forbittenMessage();
-    }
-
-    $shipping_methods_manager = $this->entityTypeManager()->getStorage("commerce_shipping_method");
+  protected function constructShippingMethodtable(Request $request, array &$shippingMethods, array $operation_disabled = []) {
     $datas = [];
-
-    /**
-     * chargement des moyens de paiement que peuvent utiliser les clients wb-horizon
-     * @var array<ShippingMethod> $shippingMethods
-     */
-    $shippingMethods = $shipping_methods_manager->loadByProperties([
-      "field_domain_access" => $this->domainNegotiator->getActiveId()
-    ]);
-
-    // Build the render array for the button.
-    $datas['action_button'] = [
-      '#type' => 'link',
-      '#title' => $this->t("Add a method"),
-      '#url' => Url::fromRoute('wb_commerce.shipping_method_add', [], [
-        'query' => [
-          'destination' => $request->getPathInfo()
-        ]
-      ]),
-      '#attributes' => [
-        "class" => ["button", "button--primary"]
-      ]
-    ];
     $header = [
       'name' => $this->t('Name'),
       'statut' => $this->t('Active'),
@@ -178,6 +153,57 @@ class WbCommerceController extends ControllerBase {
     $rows = [];
     foreach ($shippingMethods as &$shippingMethod) {
       $id = $shippingMethod->id();
+
+      $operations = [
+        'handle' => [
+          'title' => $this->t('Edit'),
+          'weight' => 0,
+          'url' => Url::fromRoute(
+            "wb_commerce.shipping_method",
+            [
+              'shipping_method' => $shippingMethod->id()
+            ],
+            [
+              'query' => [
+                'destination' => $request->getPathInfo()
+              ]
+            ]
+          )
+        ],
+        'duplicate' => [
+          'title' => $this->t('Duplicate'),
+          'weight' => 9,
+          'url' => Url::fromRoute(
+            "wb_commerce.duplicate_shipping_method",
+            [
+              'shipping_method' => $shippingMethod->id()
+            ],
+            [
+              'query' => [
+                'destination' => $request->getPathInfo()
+              ]
+            ]
+          )
+        ],
+        'delete' => [
+          'title' => $this->t('Delete'),
+          'weight' => 10,
+          'url' => Url::fromRoute(
+            "entity.commerce_shipping_method.delete_form",
+            [
+              'commerce_shipping_method' => $shippingMethod->id()
+            ],
+            [
+              'query' => [
+                'destination' => $request->getPathInfo()
+              ]
+            ]
+          )
+        ]
+      ];
+      foreach ($operation_disabled as $operation) {
+        unset($operations[$operation]);
+      }
       $rows[$id] = [
         'name' => $shippingMethod->hasLinkTemplate('canonical') ? [
           'data' => [
@@ -191,53 +217,7 @@ class WbCommerceController extends ControllerBase {
         'operations' => [
           'data' => [
             "#type" => "operations",
-            "#links" => [
-              'handle' => [
-                'title' => $this->t('Edit'),
-                'weight' => 0,
-                'url' => Url::fromRoute(
-                  "wb_commerce.shipping_method",
-                  [
-                    'shipping_method' => $shippingMethod->id()
-                  ],
-                  [
-                    'query' => [
-                      'destination' => $request->getPathInfo()
-                    ]
-                  ]
-                )
-              ],
-              'duplicate' => [
-                'title' => $this->t('Duplicate'),
-                'weight' => 9,
-                'url' => Url::fromRoute(
-                  "wb_commerce.duplicate_shipping_method",
-                  [
-                    'shipping_method' => $shippingMethod->id()
-                  ],
-                  [
-                    'query' => [
-                      'destination' => $request->getPathInfo()
-                    ]
-                  ]
-                )
-              ],
-              'delete' => [
-                'title' => $this->t('Delete'),
-                'weight' => 10,
-                'url' => Url::fromRoute(
-                  "entity.commerce_shipping_method.delete_form",
-                  [
-                    'commerce_shipping_method' => $shippingMethod->id()
-                  ],
-                  [
-                    'query' => [
-                      'destination' => $request->getPathInfo()
-                    ]
-                  ]
-                )
-              ]
-            ]
+            "#links" => $operations
           ]
         ]
       ];
@@ -248,6 +228,7 @@ class WbCommerceController extends ControllerBase {
         '#header' => $header,
         '#title' => 'Titre de la table',
         '#rows' => $rows,
+        '#weight' => 3,
         '#empty' => 'Aucun contenu',
         '#attributes' => [
           'class' => [
@@ -261,7 +242,78 @@ class WbCommerceController extends ControllerBase {
 
       $datas["table"] = $build;
     }
+    return $datas;
+  }
 
+  /**
+   * permet de lister les paiements et de les configurees par le prorietaire du
+   * site.
+   */
+  public function shippingMethodsList(Request $request) {
+    if (!lesroidelareno::userIsAdministratorSite() && lesroidelareno::FindUserAuthorDomain()) {
+      return $this->forbittenMessage();
+    }
+
+    $shipping_methods_manager = $this->entityTypeManager()->getStorage("commerce_shipping_method");
+    $duplicate = $request->get("duplicate");
+    $requiredProperties = [
+      "field_domain_access" => $this->domainNegotiator->getActiveId()
+    ];
+    $operations_disabled = [];
+    if (isset($duplicate)) {
+      $requiredProperties["is_public"] = true;
+      $operations_disabled = ["handle", "delete"];
+      // Build the render array for the button.
+    } else {
+      $datas['action_buttons'] = [
+        "#type" => "container",
+        "add_method" => [
+          '#type' => 'link',
+          '#title' => $this->t("Add a method"),
+          '#url' => Url::fromRoute('wb_commerce.shipping_method_add', [], [
+            'query' => [
+              'destination' => $request->getPathInfo()
+            ]
+          ]),
+          '#attributes' => [
+            "class" => ["button", "button--primary", "button--action"]
+          ]
+        ],
+        "api_login" => [
+          '#type' => 'link',
+          '#title' => $this->t("api login"),
+          '#url' => Url::fromRoute("hbkcolissimochrono.settings", [], [
+            'query' => [
+              'domain_config_ui_domain' => $this->domainNegotiator->getActiveId(),
+              'domain_config_ui_language' => '',
+              'destination' => $request->getPathInfo()
+            ],
+            'absolute' => TRUE
+          ]),
+          '#attributes' => [
+            "class" => ["button", "claro-details__wrapper"]
+          ]
+        ],
+        "duplicate_public_method" => [
+          '#type' => 'link',
+          '#title' => $this->t("Duplicate a public shipping method"),
+          '#url' => Url::fromRoute("wb_commerce.shipping_method_list", [
+            'destination' => $request->getPathInfo(),
+            'duplicate' => ''
+          ]),
+          '#attributes' => [
+            "class" => ["button"]
+          ]
+        ]
+      ];
+    }
+    /**
+     * chargement des moyens de paiement que peuvent utiliser les clients wb-horizon
+     * @var array<ShippingMethod> $shippingMethods
+     */
+    $shippingMethods = $shipping_methods_manager->loadByProperties($requiredProperties);
+
+    $datas[] = $this->constructShippingMethodtable($request, $shippingMethods, $operations_disabled);
     return $datas;
   }
 
@@ -298,11 +350,14 @@ class WbCommerceController extends ControllerBase {
         });
       }
     }
-    $test = "pluginId";
     foreach ($pluginsToDisable as $pluginId) {
       unset($form["plugin"]["widget"][0]["target_plugin_id"][$pluginId]);
       unset($form["plugin"]["widget"][0]["target_plugin_id"]["#options"][$pluginId]);
     }
+
+    //disabled is_public field 
+    unset($form["is_public"]);
+
     //formatter les plugins actifs
     $form["plugin"]["widget"][0]["target_plugin_id"]["#ajax"]["callback"] = ["::pluginUpdate"];
     $form["plugin"]["widget"][0]["target_plugin_id"]["#default_value"] = $pluginsToFormat[0] ?? "";
