@@ -1,0 +1,4 @@
+services:
+  hbkcolissimochrono.default_settings:
+    class: Drupal\wb_commerce\Services\ColissimoDefaultSettings
+    arguments: []
