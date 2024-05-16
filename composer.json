@@ -3,7 +3,7 @@
   "description": "Module to handle shipping cost by domain",
   "type": "drupal-custom-module",
   "require": {
-    "stephane888/creation_site_virtuel": "^1.7 | dev-1x",
+    "stephane888/creation_site_virtuel": "^1.7.6 | dev-1x",
     "habeuk/lesroidelareno": "^2.0 | dev-wbh",
     "habeuk/manage_module_config": "^0.0 | dev-1x"
   },
