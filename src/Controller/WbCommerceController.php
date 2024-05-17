@@ -256,15 +256,14 @@ class WbCommerceController extends ControllerBase {
 
     $shipping_methods_manager = $this->entityTypeManager()->getStorage("commerce_shipping_method");
     $duplicate = $request->get("duplicate");
-    $requiredProperties = [
-      "field_domain_access" => $this->domainNegotiator->getActiveId()
-    ];
+    $requiredProperties = [];
     $operations_disabled = [];
     if (isset($duplicate)) {
       $requiredProperties["is_public"] = true;
       $operations_disabled = ["handle", "delete"];
       // Build the render array for the button.
     } else {
+      $requiredProperties["field_domain_access"] = $this->domainNegotiator->getActiveId();
       $datas['action_buttons'] = [
         "#type" => "container",
         "add_method" => [
