@@ -5,8 +5,8 @@ wb_commerce.shipping_method_list:
     _title: "Configuration de methode de livraison"
     _controller: '\Drupal\wb_commerce\Controller\WbCommerceController::shippingMethodsList'
   requirements:
-    _permission: 'access content'
-    _role: 'gerant_de_site_web+administrator'
+    _permission: "access content"
+    _role: "gerant_de_site_web+administrator"
 
 wb_commerce.shipping_method_add:
   path: "/admin/wb_commerce/shipping-methods/add"
@@ -14,8 +14,8 @@ wb_commerce.shipping_method_add:
     _title: "Ajout d'une methode de livraison"
     _controller: '\Drupal\wb_commerce\Controller\WbCommerceController::addShippingMethod'
   requirements:
-    _permission: 'access content'
-    _role: 'gerant_de_site_web+administrator'
+    _permission: "access content"
+    _role: "gerant_de_site_web+administrator"
 
 wb_commerce.shipping_method:
   path: "/admin/wb_commerce/shipping-methods/{shipping_method}"
@@ -27,8 +27,8 @@ wb_commerce.shipping_method:
     _title: "Edition d'une methode de livraison"
     _controller: '\Drupal\wb_commerce\Controller\WbCommerceController::shippingMethod'
   requirements:
-    _permission: 'access content'
-    _role: 'gerant_de_site_web+administrator'
+    _permission: "access content"
+    _role: "gerant_de_site_web+administrator"
 
 wb_commerce.duplicate_shipping_method:
   path: "/admin/wb_commerce/shipping-methods/{shipping_method}/duplicate"
@@ -40,16 +40,16 @@ wb_commerce.duplicate_shipping_method:
     _title: "Edition d'une methode de livraison"
     _controller: '\Drupal\wb_commerce\Controller\WbCommerceController::duplicateShippingMethod'
   requirements:
-    _permission: 'access content'
-    _role: 'gerant_de_site_web+administrator'
+    _permission: "access content"
+    _role: "gerant_de_site_web+administrator"
 
 wb_commerce.wb_commerce_shipping_method_filter:
   path: "/admin/config/wb_commerce/shippingmethodfilter"
   defaults:
     _form: '\Drupal\wb_commerce\Form\ShippingMethodFilter'
     _title: "ShippingMethodFilter"
- requirements:
-    _permission: 'access content'
-    _role: 'gerant_de_site_web+administrator'
+  requirements:
+    _permission: "access content"
+    _role: "gerant_de_site_web+administrator"
   options:
     _admin_route: TRUE
