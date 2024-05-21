@@ -2,3 +2,7 @@ services:
   hbkcolissimochrono.default_settings:
     class: Drupal\wb_commerce\Services\ColissimoDefaultSettings
     arguments: []
+  wb_commerce.route_subscriber:
+    class: Drupal\wb_commerce\Routing\RouteSubscriber
+    tags:
+      - { name: event_subscriber }

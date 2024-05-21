@@ -18,6 +18,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\domain\DomainNegotiatorInterface;
 use Drupal\lesroidelareno\lesroidelareno;
 use Drupal\commerce_shipping\ShippingMethodManager;
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Session\AccountInterface;
 use PhpParser\Node\Expr\Isset_;
 use Symfony\Component\Validator\Constraints\IsNull;
 
@@ -244,6 +246,15 @@ class WbCommerceController extends ControllerBase {
     }
     return $datas;
   }
+
+
+  public function ownerAccess(AccountInterface $account) {
+    if (lesroidelareno::FindUserAuthorDomain() || lesroidelareno::isAdministrator()) {
+      return AccessResult::allowed();
+    }
+    return AccessResult::forbidden();
+  }
+
 
   /**
    * permet de lister les paiements et de les configurees par le prorietaire du
