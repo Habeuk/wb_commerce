@@ -43,3 +43,55 @@ function wb_commerce_form_hbkcolissimochrono_settings_alter(&$form, \Drupal\Core
     $response->send();
   }
 }
+
+function wb_commerce_update_8002() {
+  $entity_type_id = "commerce_payment_config";
+  $updateManager = \Drupal::entityDefinitionUpdateManager();
+  /**
+   *
+   * @var \Drupal\Core\Entity\Sql\SqlContentEntityStorage $entityStorage
+   */
+  $entityStorage = \Drupal::entityTypeManager()->getStorage($entity_type_id);
+  // Retrieve existing field data.
+  $database = \Drupal::database();
+  $table = $entity_type_id;
+  $names = $database->select($table, 'et')->fields('et', [
+    "id",
+    "publishable_key",
+    "secret_key",
+    "langcode"
+  ])->execute()->fetchAll(\PDO::FETCH_ASSOC);
+  // Remove data from the column.
+  $database->update($table)->fields([
+    'publishable_key' => NULL,
+    'secret_key' => NULL,
+
+  ])->execute();
+  //
+  // si les revisions sont activées.
+
+
+
+  // Remove old definition field.
+  $updateManager = \Drupal::entityDefinitionUpdateManager();
+  $storagedef = $updateManager->getFieldStorageDefinition('publishable_key', $entity_type_id);
+  $updateManager->uninstallFieldStorageDefinition($storagedef);
+  $storagedef = $updateManager->getFieldStorageDefinition('secret_key', $entity_type_id);
+  $updateManager->uninstallFieldStorageDefinition($storagedef);
+  // Load new definition field in code.
+  /**
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManager $fieldManager
+   */
+  $fieldManager = \Drupal::service('entity_field.manager');
+  $fields = $fieldManager->getFieldStorageDefinitions($entity_type_id);
+  $updateManager->installFieldStorageDefinition('publishable_key', $entity_type_id, "lesroidelareno", $fields['publishable_key']);
+  $updateManager->installFieldStorageDefinition('secret_key', $entity_type_id, "lesroidelareno", $fields['secret_key']);
+  // Restore entity data in the new schema.
+  foreach ($names as $name) {
+    $database->update($table)->fields([
+      'publishable_key' => $name['publishable_key'],
+      'secret_key' => $name['secret_key']
+    ])->condition('id', $name['id'])->condition('langcode', $name['langcode'])->execute();
+  }
+}
