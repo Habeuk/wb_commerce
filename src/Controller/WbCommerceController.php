@@ -119,7 +119,6 @@ class WbCommerceController extends ControllerBase {
 
   public function duplicateShippingMethod(Request $request, ShippingMethod $shipping_method) {
     $new_shipping = $shipping_method->createDuplicate();
-    $new_shipping->set("name", "");
     $new_shipping->set('is_public', false);
     $new_shipping->set('field_domain_access', $this->domainNegotiator->getActiveId());
     $new_shipping->set('field_domain_source', $this->domainNegotiator->getActiveId());
