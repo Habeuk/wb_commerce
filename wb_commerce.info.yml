@@ -1,7 +1,7 @@
-name: "wb_shipping"
+name: "Wb commerce"
 type: module
 description: "Modules to handle shipping by domain"
-core_version_requirement: 9.x
+core_version_requirement: ^9 || ^10
 package: "Custom"
 dependencies:
   - creation_site_virtuel
