@@ -5,7 +5,7 @@
   "require": {
     "stephane888/creation_site_virtuel": "^1.7.6 | dev-1x",
     "habeuk/lesroidelareno": "^2.0 | dev-wbh",
-    "habeuk/manage_module_config": "^0.0 | dev-1x"
+    "habeuk/manage_module_config": "^1.0 | dev-1x"
   },
   "license": "MIT",
   "authors": [
