@@ -7,7 +7,6 @@
 
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\lesroidelareno\lesroidelareno;
 use Drupal\Core\Url;
 
 /**
@@ -26,21 +25,30 @@ function wb_commerce_help($route_name, RouteMatchInterface $route_match) {
   }
 }
 
+
+/**
+ * {@inheritdoc}
+ * 
+ * redirect to config for the current domain if the module lesroidelareno is installed
+ * without it, each wb-horizon site present in the server would just reconfigure the default
+ * settings
+ */
 function wb_commerce_form_hbkcolissimochrono_settings_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
-  // dd("hello");
-  $request = Drupal::request();
-  $query = $request->query->get('domain_config_ui_domain');
-  $domain =  lesroidelareno::getCurrentDomainId();
-  if (empty($query) || $domain !== $query) {
-    $url = Url::fromRoute("hbkcolissimochrono.settings", [], [
-      'query' => [
-        'domain_config_ui_domain' => $domain,
-        'domain_config_ui_language' => ''
-      ],
-      'absolute' => TRUE
-    ]);
-    $response =  new RedirectResponse($url->toString());
-    $response->send();
+  if (\Drupal::moduleHandler()->moduleExists('lesroidelareno')) {
+    $request = Drupal::request();
+    $query = $request->query->get('domain_config_ui_domain');
+    $domain =  \Drupal\lesroidelareno\lesroidelareno::getCurrentDomainId();
+    if (empty($query) || $domain !== $query) {
+      $url = Url::fromRoute("hbkcolissimochrono.settings", [], [
+        'query' => [
+          'domain_config_ui_domain' => $domain,
+          'domain_config_ui_language' => ''
+        ],
+        'absolute' => TRUE
+      ]);
+      $response =  new RedirectResponse($url->toString());
+      $response->send();
+    }
   }
 }
 
