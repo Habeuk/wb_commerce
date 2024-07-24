@@ -2,26 +2,16 @@
 
 namespace Drupal\wb_commerce\Controller;
 
-use Drupal\commerce\Plugin\Field\FieldWidget\PluginRadiosWidget;
 use Drupal\Core\Controller\ControllerBase;
-use Stephane888\Debug\Repositories\ConfigDrupal;
-use Stephane888\DrupalUtility\HttpResponse;
-use Drupal\prise_rendez_vous\Entity\RdvConfigEntity;
-use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
-use Drupal\commerce_payment\Entity\PaymentGateway;
 use Drupal\commerce_shipping\Entity\ShippingMethod;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Drupal\lesroidelareno\Entity\CommercePaymentConfig;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\domain\DomainNegotiatorInterface;
-use Drupal\lesroidelareno\lesroidelareno;
 use Drupal\commerce_shipping\ShippingMethodManager;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Session\AccountInterface;
-use PhpParser\Node\Expr\Isset_;
-use Symfony\Component\Validator\Constraints\IsNull;
 
 /**
  * Class DonneeSiteInternetEntityController.
@@ -248,7 +238,11 @@ class WbCommerceController extends ControllerBase {
 
 
   public function ownerAccess(AccountInterface $account) {
-    if (lesroidelareno::FindUserAuthorDomain() || lesroidelareno::isAdministrator()) {
+    if (\Drupal::moduleHandler()->moduleExists('lesroidelareno')) {
+      if (\Drupal\lesroidelareno\lesroidelareno::FindUserAuthorDomain() || \Drupal\lesroidelareno\lesroidelareno::isAdministrator()) {
+        return AccessResult::allowed();
+      }
+    } elseif (in_array('administrator', $account->getRoles())) {
       return AccessResult::allowed();
     }
     return AccessResult::forbidden();
@@ -260,7 +254,7 @@ class WbCommerceController extends ControllerBase {
    * site.
    */
   public function shippingMethodsList(Request $request) {
-    if (!lesroidelareno::userIsAdministratorSite() && lesroidelareno::FindUserAuthorDomain()) {
+    if ($this->ownerAccess(\Drupal::currentUser())->isForbidden()) {
       return $this->forbittenMessage();
     }
 
