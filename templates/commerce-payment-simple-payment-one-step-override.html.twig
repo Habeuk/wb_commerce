@@ -1,0 +1,123 @@
+{#
+/**
+ * @file
+ * Template for the secure payment page.
+ */
+#}
+<section class="full-page-payments">
+	<div class="container">
+		<div class="payment-container d-flex justify-content-center mx-auto margin-top margin-bottom width-tablet">
+			<div class="payment-form d-flex flex-column justify-content-between">
+				<div class="header text-center">
+					<h3>{{ 'Override Secure Payment'|t }}
+					</h3>
+					<p>{{'Complete your order securely'|t }}</p>
+				</div>
+				{% if stripe_public_key and client_secret and return_url %}
+					{{ element['#form']}}
+					{#
+					                    		<label for="exampleFormControlInput1" class="form-label">Methode de paiement</label>
+					                        	<div class="payment-form-element width-phone" data-return_url="{{ return_url }}" data-stripe_public_key="{{ stripe_public_key }}" data-client_secret="{{ client_secret }}">
+					                              <div class="payment-element">
+					                                Chargement encours ...
+					                              </div>
+					                              <span class="submit-payment btn mt-5 btn-wbu-secondary w-100 border-radius-10 fw-light btn-lg">
+					                                <span class="spinner hidden" id="spinner"></span>
+					                                <span class="button-text"> {{ text_button_payment }} </span>
+					                              </span>
+					                              <div class="hidden payment-message"></div>
+					                            </div>      
+					                        #}
+				{% else %}
+					<div class="alert alert-danger border-radius-10 margin-top margin-bottom">
+						<h4>{{'Configuration error'|t}}</h4>
+						<p>
+							{{'Please try again later.'|t}}</p>
+					</div>
+				{% endif %}
+				<div class="security-badges bg-wbu-thirdly border-radius-10 flex-wrap w-100">
+					<div class="badge">
+						<div class="mb-2">
+							{% include '@commerce_payment_simple/includes/ssl-icon.html.twig' %}
+						</div>
+						<span>{{'Secure <br> SSL payment'|t}}</span>
+					</div>
+					<div class="badge">
+						<div class="mb-2">
+							{% include '@commerce_payment_simple/includes/safe-icon.html.twig' %}
+						</div>
+						<span>{{'Anti-fraud <br>protection'|t}}</span>
+					</div>
+					<div class="badge">
+						<div class="mb-2">
+							{% include '@commerce_payment_simple/includes/privacy-icon.html.twig' %}
+						</div>
+						<span>{{'Your data<br>protected'|t}}</span>
+					</div>
+				</div>
+				<div class="mt-3">
+					<a href="{{ element['#back_url_service'] }}" class="back-link">
+						<i class="fas fa-arrow-left"></i>
+						{{'Return to order'|t}}</a>
+				</div>
+			</div>
+			<div class="order-summary d-flex flex-column justify-content-between">
+				<div class="header text-center title">
+					<h3 class=" d-flex justify-content-center align-items-baseline">
+						{% include '@commerce_payment_simple/includes/shopping-bag-icon.html.twig' %}
+						{{'Your Order'|t}}
+					</h3>
+					<div class="small opacity-50">
+						{{'Reference'|t}}:
+						{{ element['#sku_vente'] }}</div>
+				</div>
+				<div>
+					<div class="order-items">
+						{% for item in order.getItems() %}
+							<div class="order-item">
+								<div>
+									<strong>{{ item.getPurchasedEntity().label() }}</strong>
+									<div class="opacity-50 small">{{'Delivery in 72 hours'|t}}</div>
+								</div>
+								<div>{{ item.getTotalPrice()|commerce_price_format }}</div>
+							</div>
+						{% endfor %}
+						<div class="order-item">
+							<div>
+								<strong>{{'2 month of free accommodation'|t}}</strong>
+								<div class="opacity-50 small">{{'Value 9.90€'|t}}</div>
+							</div>
+							<div>0,00 €</div>
+						</div>
+						<div class="order-item">
+							<div>
+								<strong>{{'Training included'|t}}</strong>
+								<div class="opacity-50 small">{{'1 hour of training'|t}}</div>
+							</div>
+							<div>0,00 €</div>
+						</div>
+					</div>
+					<div class="order-total h4 fw-bold">
+						<div>{{'Total TTC'|t}}</div>
+						<div>{{ order.getTotalPrice()|commerce_price_format }}</div>
+					</div>
+				</div>
+				<div>
+					<div class="guarantee">
+						<div class="mb-2">
+							{% include '@commerce_payment_simple/includes/achievement-award-medal.html.twig' %}
+						</div>
+						<h3 class="h4">{{'Zero risk, 100% confidence'|t}}</h3>
+						<p>{{'At Habeuk, we refund you if the agreed specifications are not met.<br>You only pay for work that meets our commitments.'|t}}</p>
+					</div>
+					<div class="payment-methods">
+						<div class="payment-method">VISA</div>
+						<div class="payment-method">MC</div>
+						<div class="payment-method">CB</div>
+						<div class="payment-method">PP</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>

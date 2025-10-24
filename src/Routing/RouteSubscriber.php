@@ -10,12 +10,14 @@ use Symfony\Component\Routing\RouteCollection;
  *
  * Listens to the dynamic route events.
  */
-class RouteSubscriber extends RouteSubscriberBase {
+class RouteSubscriber extends RouteSubscriberBase
+{
 
   /**
    * {@inheritdoc}
    */
-  protected function alterRoutes(RouteCollection $collection) {
+  protected function alterRoutes(RouteCollection $collection)
+  {
     $routes_to_override = [
       "hbkcolissimochrono.settings",
       "wb_commerce.shipping_method_list",
@@ -36,6 +38,10 @@ class RouteSubscriber extends RouteSubscriberBase {
           ]
         );
       }
+    }
+
+    if ($route = $collection->get('commerce_payment_simple.payment_one_step')) {
+      $route->setDefault('_controller', '\Drupal\wb_commerce\Controller\CommercePaymentSimpleController::paymentOneStep');
     }
   }
 }
