@@ -1,5 +1,6 @@
 <?php
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Drupal\wb_commerce\Controller;
 
@@ -20,10 +21,10 @@ use Drupal\commerce_payment_simple\Controller\CommercePaymentSimpleController as
  * Returns responses for Commerce Payment Simple routes.
  */
 final class CommercePaymentSimpleController extends CommercePaymentSimpleControllerBase {
-  
+
   function __construct(private readonly ManageOrder $managePaymentOrder, private readonly CurrencyFormatter $priceFormatter) {
   }
-  
+
   public static function create(ContainerInterface $container) {
     return new static($container->get('commerce_payment_simple.manage_order'), $container->get('commerce_price.currency_formatter'));
   }
@@ -48,18 +49,19 @@ final class CommercePaymentSimpleController extends CommercePaymentSimpleControl
     /**
      *
      * @var Order $order
-    */
+     */
     $order = $data['order'];
     $price = $order->getTotalPrice();
     // dd('hello world', $product_variation_id, $productVariation);
     $price_formatter = $this->priceFormatter->format($price->getNumber(), $price->getCurrencyCode());
     $text_button_payment = $this->t('Pay now : ') . $price_formatter;
-    
+
     $return_url = Url::fromRoute('commerce_payment_simple.payment_end', [
       'order_id' => $order->id()
     ], [
       'absolute' => TRUE
     ])->toString();
+
     // url de retour vers le service.
     $back_url = Url::fromRoute('entity.node.canonical', [
       'node' => 182
@@ -83,15 +85,11 @@ final class CommercePaymentSimpleController extends CommercePaymentSimpleControl
     if ($sid !== null && $sid !== '') {
       $sid = (int) $sid;
       $webform_submission = $this->entityTypeManager()->getStorage('webform_submission')->load($sid);
-      // dump($webform_submission->getData());
       if ($webform_submission) {
-        // On expose la soumission sur la requête pour réutilisation ultérieure.
-        // $request->attributes->set('webform_submission', $webform_submission);
         $webform_data = $webform_submission->getData();
         $form['information']['name_firstname']['#value'] = $webform_data["name"];
         $form['information']['email']['#value'] = $webform_data["email"];
-      }
-      else {
+      } else {
         $this->messenger()->addWarning($this->t('La soumission webform @sid n\'existe pas.', ['@sid' => $sid]));
         $this->getLogger('commerce_payment_simple')->warning('Tentative de chargement d\'une soumission webform inexistante (@sid).', ['@sid' => $sid]);
       }
@@ -130,8 +128,8 @@ final class CommercePaymentSimpleController extends CommercePaymentSimpleControl
     $build['content']['#title'] = 'Paiement : ' . $productVariation->label();
     return $build;
   }
-  
-  public function paymentCompleted($order_id, Request $request): array {
+
+  public function paymentCompletedOverride($order_id, Request $request) {
     $form = [];
     $order_id = (int) $order_id;
     $Order = Order::load($order_id);
@@ -139,29 +137,27 @@ final class CommercePaymentSimpleController extends CommercePaymentSimpleControl
       throw new \Exception("La commande n'existe plus ");
     }
     $this->managePaymentOrder->validatePayment($Order);
-    $webform = $this->entityTypeManager()->getStorage('webform')->load('commande_site_basic');
-    $form['webform'] = $this->entityTypeManager()->getViewBuilder('webform')->view($webform);
-    $titlePrefix = $this->t('Payment completed');
-    $titlePrefix2 = $this->t('Reference');
-    // Le module page_title recupere ce title.
-    $build['#title'] = $titlePrefix . ' » ' . $titlePrefix2 . ': ' . $this->managePaymentOrder->getSkuVente($Order);
-    // On passe ce titre à la requete
-    $request->attributes->set('_title', $build['#title']);
-    if (!empty($form['webform']['elements']['commande'])) {
-      $form['webform']['elements']['commande']['#default_value'] = $Order;
-      $form['webform']['elements']['commande']['#value'] = $Order->label() . ' (' . $Order->id() . ')';
-    }
-    return [
-      '#theme' => 'commerce_payment_simple_payment_end',
-      '#content' => $form,
-      '#time_cache' => time(),
-      // Désactivation du cache
-      '#cache' => [
-        'max-age' => 0
+
+    // $current_user = \Drupal::currentUser();
+    // if ($current_user->isAuthenticated()) {
+    //   $user_id = $current_user->id();
+    //   if ($user_id !== 38) {
+    //     dump("this override");
+    //   }
+    // }
+    $url = Url::fromRoute('entity.site_internet_entity.canonical', [
+      'site_internet_entity' => 7743
+    ], [
+      'absolute' => TRUE
+    ]);
+    return $this->redirect(
+      'entity.site_internet_entity.canonical',
+      [
+        'site_internet_entity' => 7743
       ]
-    ];
+    );
   }
-  
+
   /**
    * Le plugin bloc more_fields_titre_de_la_page_encours recuperer le titre à
    * partir du service titleResolver, donc les titres defini via '#title' ne
@@ -173,7 +169,7 @@ final class CommercePaymentSimpleController extends CommercePaymentSimpleControl
   public function getTitlePage(Request $request) {
     return $request->attributes->get('_title');
   }
-  
+
   private function loadTranslate(ContentEntityBase &$entity) {
     // on doit charger les données en fonction de la langue encours.
     $lang_code = $this->languageManager()->getCurrentLanguage()->getId();
@@ -181,5 +177,4 @@ final class CommercePaymentSimpleController extends CommercePaymentSimpleControl
       $entity = $entity->getTranslation($lang_code);
     }
   }
-  
 }
